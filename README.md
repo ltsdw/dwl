@@ -1,1 +1,1 @@
-[dwl](https://codeberg.org/dwl/dwl)'s fork.
+[dwl](https://codeberg.org/dwl/dwl) fork.
