@@ -1426,6 +1426,10 @@ void destroytablet(struct wl_listener* listener, void* data) {
     TabletPad* tablet_pad_tmp = NULL;
     device->data = NULL;
 
+    wlr_cursor_detach_input_device(cursor, tablet->wlr_tablet_v2->wlr_device);
+    wl_list_remove(&tablet->listener_destroy.link);
+    wl_list_remove(&tablet->link);
+
     /*
      * May there be new parents for the orphaned pad.
      */
@@ -1435,10 +1439,6 @@ void destroytablet(struct wl_listener* listener, void* data) {
     }
 
     tabletpadattachtotablet();
-
-    wlr_cursor_detach_input_device(cursor, tablet->wlr_tablet_v2->wlr_device);
-    wl_list_remove(&tablet->listener_destroy.link);
-    wl_list_remove(&tablet->link);
 
     free(tablet);
 }
