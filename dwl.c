@@ -1422,18 +1422,23 @@ void destroykeyboardgroup(struct wl_listener* listener, void* data) {
 void destroytablet(struct wl_listener* listener, void* data) {
     struct wlr_input_device* device = data;
     Tablet* tablet = wl_container_of(listener, tablet, listener_destroy);
+    TabletPad* tablet_pad = NULL;
+    TabletPad* tablet_pad_tmp = NULL;
     device->data = NULL;
-    tablet->device = NULL;
-
-    wlr_cursor_detach_input_device(cursor, tablet->wlr_tablet_v2->wlr_device);
-
-    wl_list_remove(&tablet->listener_destroy.link);
-    wl_list_remove(&tablet->link);
 
     /*
      * May there be new parents for the orphaned pad.
      */
+    wl_list_for_each_safe(tablet_pad, tablet_pad_tmp, &tablet->tablet_pads, link) {
+        wl_list_remove(&tablet_pad->link);
+        wl_list_insert(&orphan_pads, &tablet_pad->link);
+    }
+
     tabletpadattachtotablet();
+
+    wlr_cursor_detach_input_device(cursor, tablet->wlr_tablet_v2->wlr_device);
+    wl_list_remove(&tablet->listener_destroy.link);
+    wl_list_remove(&tablet->link);
 
     free(tablet);
 }
@@ -2986,6 +2991,7 @@ void tabletpadattachtotablet(void) {
     struct libinput_device_group* tablet_device_group = NULL;
     struct libinput_device_group* tablet_pad_device_group = NULL;
     TabletPad* tablet_pad = NULL;
+    TabletPad* tablet_pad_tmp = NULL;
     Tablet* tablet = NULL;
 
     wl_list_for_each(tablet, &tablets, link) {
@@ -3003,9 +3009,10 @@ void tabletpadattachtotablet(void) {
         tablet_device_group = libinput_device_get_device_group(tablet_device_handle);
 
         tablet_pad = NULL;
+        tablet_pad_tmp = NULL;
         tablet_pad_device_handle = NULL;
         tablet_pad_device_group = NULL;
-        wl_list_for_each(tablet_pad, &orphan_pads, link) {
+        wl_list_for_each_safe(tablet_pad, tablet_pad_tmp, &orphan_pads, link) {
             /*
              * Same as above, still, it's good to be pedantic!
              */
