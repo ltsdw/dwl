@@ -1250,6 +1250,7 @@ void createtabletpad(struct wlr_input_device* device) {
      *
      * If none is found, it will get added to the orphaned tablet pad list, waiting for a parent.
      */
+    wl_list_insert(&orphan_pads, &tablet_pad->link);
     tabletpadattachtotablet();
 }
 
@@ -3016,7 +3017,15 @@ void tabletpadattachtotablet(void) {
             tablet_pad_device_group = libinput_device_get_device_group(tablet_pad_device_handle);
 
             if (tablet_device_group == tablet_pad_device_group) {
+                /*
+                 * Removes the tablet pad from the orphanage and insert into the tablet's list.
+                 */
+                wl_list_remove(&tablet_pad->link);
                 wl_list_insert(&tablet->tablet_pads, &tablet_pad->link);
+
+                if (seat->keyboard_state.focused_surface) {
+                    tabletpadfocussurface(seat->keyboard_state.focused_surface);
+                }
             }
         }
     }
